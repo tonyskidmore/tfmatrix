@@ -95,6 +95,7 @@ jobs:
 
   terraform:
     name: 'Terraform'
+    if: ${{ contains(fromJson(needs.changed_files.outputs.output1), 'dev') || contains(fromJson(needs.changed_files.outputs.output1), 'tst') || contains(fromJson(needs.changed_files.outputs.output1), 'prd') }} 
     runs-on: ubuntu-latest
     needs: changed_files
     strategy:
