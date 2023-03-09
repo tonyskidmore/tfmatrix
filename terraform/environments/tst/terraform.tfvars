@@ -1,1 +1,1 @@
-length = 12
+length = 6
