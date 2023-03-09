@@ -87,7 +87,10 @@ jobs:
             dirs+=("${dir#/}")
             declare -p dirs
             printf -v environ "%s," "${dirs[@]}"
-            echo "environ=[${joined%,}]" >> "$GITHUB_OUTPUT"
+            echo "[${joined%,}]"
+            echo "${dirs[@]}"
+            # echo "environ=[${joined%,}]" >> "$GITHUB_OUTPUT"
+            echo "environ=${dirs[@]}" >> "$GITHUB_OUTPUT"
         done
 
   terraform:
