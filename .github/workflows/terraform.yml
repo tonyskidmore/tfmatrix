@@ -79,7 +79,7 @@ jobs:
       run: terraform --version
 
     - name: Terraform Init
-      run: terraform init -vars terraform/${{ matrix.environ }}/tfvars.tf
+      run: terraform init
       working-directory: terraform
 
     - name: Terraform Format
