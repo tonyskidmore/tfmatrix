@@ -85,12 +85,13 @@ jobs:
             dir=$(dirname $file)
             echo "${dir#/}"
             dirs+=("${dir#/}")
-            declare -p dirs
-            printf -v environ "%s," "${dirs[@]}"
-            echo "[${environ%,}]"
-            echo "${dirs[@]}"
-            echo "environ=[${environ%,}]" >> "$GITHUB_OUTPUT"
-        done
+        done        
+        # printf -v environ "%s," "${dirs[@]}"
+        # echo "[${environ%,}]"
+        # echo "${dirs[@]}"
+        declare -p dirs
+        json=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${dirs[@]}")
+        echo "environ=$json" >> "$GITHUB_OUTPUT"
 
   terraform:
     name: 'Terraform'
