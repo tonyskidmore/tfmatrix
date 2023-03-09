@@ -40,9 +40,13 @@ jobs:
         for file in ${{ steps.changed-files.outputs.all_changed_files }}
         do
           echo "$file was changed"
-            dir=$(dirname $file)
-            dir_name="${dir#/terraform/environments/}"
-            [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]] && dirs+=("$dir_name")
+          dir=$(dirname $file)
+          dir_name="${dir#/terraform/environments/}"
+          if [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]]
+          then
+            printf "adding %s to matrix array\n" "$dir_name"
+            dirs+=("$dir_name")
+          fi
         done
         declare -p dirs
         json=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${dirs[@]}")
@@ -50,7 +54,6 @@ jobs:
 
   terraform:
     name: 'Terraform'
-    if: ${{ contains(fromJson(needs.changed_files.outputs.output1), 'dev') || contains(fromJson(needs.changed_files.outputs.output1), 'tst') || contains(fromJson(needs.changed_files.outputs.output1), 'prd') }} 
     runs-on: ubuntu-latest
     needs: changed_files
     strategy:
