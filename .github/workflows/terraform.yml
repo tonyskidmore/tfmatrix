@@ -93,6 +93,7 @@ jobs:
       working-directory: terraform
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
+      # if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/"main"'
       run: terraform apply tfplan
       working-directory: terraform
