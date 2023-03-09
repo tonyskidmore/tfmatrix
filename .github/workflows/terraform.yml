@@ -54,7 +54,7 @@ jobs:
 
   terraform:
     name: 'Terraform'
-    if: "!contains(fromJson(needs.changed_files.outputs.output1), '[]')"
+    if: needs.changed_files.outputs.output1 != '[]'
     runs-on: ubuntu-latest
     needs: changed_files
     strategy:
