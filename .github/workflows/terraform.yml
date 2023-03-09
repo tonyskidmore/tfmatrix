@@ -89,8 +89,8 @@ jobs:
             printf -v environ "%s," "${dirs[@]}"
             echo "[${joined%,}]"
             echo "${dirs[@]}"
-            # echo "environ=[${joined%,}]" >> "$GITHUB_OUTPUT"
-            echo "environ=${dirs[@]}" >> "$GITHUB_OUTPUT"
+            echo "environ=[${joined%,}]" >> "$GITHUB_OUTPUT"
+            # echo "environ=${dirs[@]}" >> "$GITHUB_OUTPUT"
         done
 
   terraform:
@@ -99,7 +99,7 @@ jobs:
     needs: changed_files
     strategy:
       matrix:
-        environ: ${{needs.changed_files.outputs.output1}}
+        environ: ${{fromJson(needs.changed_files.outputs.output1)}}
 
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
