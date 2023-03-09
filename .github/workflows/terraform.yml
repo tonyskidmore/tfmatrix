@@ -89,7 +89,7 @@ jobs:
       working-directory: terraform
 
     - name: Terraform Plan
-      run: terraform plan -out tfplan -var-file=${{ GITHUB_WORKSPACE }}/terraform/environments/${{ matrix.environ }}/terraform.tfvars
+      run: terraform plan -out tfplan -var-file="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/terraform.tfvars"
       working-directory: terraform
 
     - name: Terraform Apply
