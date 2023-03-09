@@ -79,18 +79,18 @@ jobs:
       run: terraform --version
 
     - name: Terraform Init
-      run: terraform init -vars /terraform/${{ matrix.environ }}/tfvars.tf
-      working-directory: /terraform
+      run: terraform init -vars terraform/${{ matrix.environ }}/tfvars.tf
+      working-directory: terraform
 
     - name: Terraform Format
       run: terraform fmt -check
-      working-directory: /terraform
+      working-directory: terraform
 
     - name: Terraform Plan
-      run: terraform plan -out tfplan /terraform/${{ matrix.environ }}/tfvars.tf
+      run: terraform plan -out tfplan terraform/${{ matrix.environ }}/tfvars.tf
       working-directory: /terraform
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
       run: terraform apply tfplan
-      working-directory: /terraform
+      working-directory: terraform
