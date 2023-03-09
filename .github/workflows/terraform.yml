@@ -42,10 +42,13 @@ jobs:
           echo "$file was changed"
           dir=$(dirname $file)
           dir_name="${dir#/terraform/environments/}"
+          echo "directory name: $dir_name"
           if [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]]
           then
             printf "adding %s to matrix array\n" "$dir_name"
             dirs+=("$dir_name")
+          else
+            printf "not adding %s to matrix array\n" "$dir_name"
           fi
         done
         declare -p dirs
