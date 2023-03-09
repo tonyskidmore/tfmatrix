@@ -37,15 +37,13 @@ jobs:
       id: changed
       run: |
         declare -a dirs
-        for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+        for file in ${{ steps.changed-files.outputs.all_changed_files }}
+        do
           echo "$file was changed"
             dir=$(dirname $file)
-            echo "${dir#/}"
-            dirs+=("${dir#/}")
+            dir_name="${dir#/terraform/environments/}"
+            [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]] && dirs+=("$dir_name")
         done
-        # printf -v environ "%s," "${dirs[@]}"
-        # echo "[${environ%,}]"
-        # echo "${dirs[@]}"
         declare -p dirs
         json=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${dirs[@]}")
         echo "environ=$json" >> "$GITHUB_OUTPUT"
@@ -74,18 +72,18 @@ jobs:
       run: terraform --version
 
     - name: Terraform Init
-      run: terraform init
-      working-directory: ${{ matrix.environ }}
+      run: terraform init -vars /terraform/${{ matrix.environ }}/tfvars.tf
+      working-directory: /terraform
 
     - name: Terraform Format
       run: terraform fmt -check
-      working-directory: ${{ matrix.environ }}
+      working-directory: /terraform
 
     - name: Terraform Plan
-      run: terraform plan -input=false
-      working-directory: ${{ matrix.environ }}
+      run: terraform plan -out tfplan /terraform/${{ matrix.environ }}/tfvars.tf
+      working-directory: /terraform
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
-      working-directory: ${{ matrix.environ }}
+      run: terraform apply tfplan
+      working-directory: /terraform
