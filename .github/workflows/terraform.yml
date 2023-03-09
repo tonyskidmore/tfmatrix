@@ -41,7 +41,7 @@ jobs:
         do
           echo "$file was changed"
           dir=$(dirname $file)
-          dir_name="${dir#/terraform/environments/}"
+          dir_name="${dir#terraform/environments/}"
           echo "directory name: $dir_name"
           if [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]]
           then
