@@ -59,6 +59,7 @@ jobs:
     name: 'Terraform'
     if: needs.changed_files.outputs.output1 != '[]'
     runs-on: ubuntu-latest
+    environment: ${{ matrix.environ }}
     needs: changed_files
     strategy:
       matrix:
@@ -80,18 +81,24 @@ jobs:
 
     - name: Terraform Init
       run: terraform init
+      # run: terraform init -backend-config="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/backend.tf"
       working-directory: terraform
 
     - name: Terraform Format
       run: terraform fmt -check
       working-directory: terraform
 
+    # - name: Login to Azure
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{secrets.AZURE_CREDENTIALS}}
+
     - name: Terraform Plan
       run: terraform plan -out tfplan -var-file="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/terraform.tfvars"
       working-directory: terraform
 
     - name: Terraform Apply
-      # if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
-      if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      # if: github.ref == 'refs/heads/main'
       run: terraform apply tfplan
       working-directory: terraform
