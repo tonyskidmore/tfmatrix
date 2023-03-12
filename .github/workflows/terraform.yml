@@ -113,7 +113,7 @@ jobs:
     - name: Terraform Init
       run: |
            terraform \
-           -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}"
+           -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
            init \
            -backend-config="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/config.${{ matrix.target }}.tfbackend"
 
