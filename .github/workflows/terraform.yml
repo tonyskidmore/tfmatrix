@@ -114,7 +114,7 @@ jobs:
         ls -alt "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}"
         cat "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/config.${{ matrix.target }}.tfbackend"
 
-        terraform -chdir "$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+        terraform -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
           init \
           -backend-config="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/config.${{ matrix.target }}.tfbackend"
       # run: terraform init -backend-config="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/backend.tf"
@@ -133,7 +133,7 @@ jobs:
     - name: Terraform Plan
       run: |
         terraform plan \
-          -chdir "$GITHUB_WORKSPACE/terraform/${{ matrix.target }} \
+          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }} \
           -out tfplan.${{ matrix.environment }}.${{ matrix.target }} \
           -var-file="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/terraform.tfvars"
       working-directory: terraform
@@ -152,6 +152,6 @@ jobs:
       # if: github.ref == 'refs/heads/main'
       run: |
         terraform apply \
-          -chdir "$GITHUB_WORKSPACE/terraform/${{ matrix.target }} \
+          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }} \
           tfplan.${{ matrix.environment }}.${{ matrix.target }}
       working-directory: terraform
