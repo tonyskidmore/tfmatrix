@@ -2,7 +2,7 @@
 
 GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-.}
 
-config_compact_json=$(yq -oj < "$GITHUB_WORKSPACE/config.yml" | jq -c)
+config_compact_json=$(yq 'del(."changed_only")' -oj "$GITHUB_WORKSPACE/config.yml" | jq -c)
 
 changed_only=$(yq '.changed_only' config.yml)
 

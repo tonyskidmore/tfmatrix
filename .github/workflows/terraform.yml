@@ -67,7 +67,6 @@ jobs:
       - changed_files
     outputs:
       config: ${{ steps.load_config.outputs.config}}
-      # changed_only: ${{ steps.load_config.outputs.changed_only }}
     defaults:
       run:
         shell: bash
@@ -88,7 +87,7 @@ jobs:
     name: 'Terraform'
     # if: needs.changed_files.outputs.output1 != '[]'
     runs-on: ubuntu-latest
-    environment: ${{ matrix.environ }}
+    environment: ${{ matrix.environment }}
     needs:
       - load_config
       - changed_files
