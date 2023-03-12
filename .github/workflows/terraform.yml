@@ -107,6 +107,12 @@ jobs:
 
     - name: Terraform Init
       run: |
+        ls -alt "$GITHUB_WORKSPACE"
+        ls -alt "$GITHUB_WORKSPACE/environments"
+        ls -alt "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}"
+        ls -alt "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}"
+        cat "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/backend.tf"
+
         terraform init |
           -backend-config="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/backend.tf"
       # run: terraform init -backend-config="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/backend.tf"
@@ -129,6 +135,7 @@ jobs:
       working-directory: terraform
 
     - name: Review
+      if: always()
       run: |
         env
         printf "PWD: %s\n" "$PWD"
