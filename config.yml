@@ -1,0 +1,11 @@
+---
+
+target:
+  - local
+  # - aws
+  # - azure
+
+environment:
+  - dev
+  - tst
+  - prd

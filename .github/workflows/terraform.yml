@@ -13,6 +13,25 @@ permissions:
 
 jobs:
 
+  load_config:
+    name: Config
+    runs-on: ubuntu-latest
+    outputs:
+      config: ${{ steps.load_config.outputs.config}}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Load config
+      id: load_config
+      run: scripts/get_config.sh
+
+
   changed_files:
     name: Changed
     runs-on: ubuntu-latest
@@ -60,10 +79,12 @@ jobs:
     if: needs.changed_files.outputs.output1 != '[]'
     runs-on: ubuntu-latest
     environment: ${{ matrix.environ }}
-    needs: changed_files
+    needs:
+      - load_config
+      - changed_files
     strategy:
-      matrix:
-        environ: ${{fromJson(needs.changed_files.outputs.output1)}}
+      matrix: ${{fromJson(needs.load_config.outputs.config)}}
+        # environ: ${{fromJson(needs.changed_files.outputs.output1)}}
 
     defaults:
       run:
@@ -80,25 +101,31 @@ jobs:
       run: terraform --version
 
     - name: Terraform Init
-      run: terraform init
+      run: |
+        terraform init |
+          -backend-config="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/backend.tf"
       # run: terraform init -backend-config="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/backend.tf"
       working-directory: terraform
 
     - name: Terraform Format
-      run: terraform fmt -check
+      run: terraform fmt -check -recursive
       working-directory: terraform
 
-    # - name: Login to Azure
-    #   uses: azure/login@v1
-    #   with:
-    #     creds: ${{secrets.AZURE_CREDENTIALS}}
+    - name: Login to Azure
+      if: matrix.target == 'azure'
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS}}
 
     - name: Terraform Plan
-      run: terraform plan -out tfplan -var-file="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/terraform.tfvars"
+      run: |
+        terraform plan -out tfplan.${{ matrix.environment }}.${{ matrix.target }} \
+           -var-file="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/terraform.tfvars"
       working-directory: terraform
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       # if: github.ref == 'refs/heads/main'
-      run: terraform apply tfplan
+      run: |
+        terraform apply tfplan.${{ matrix.environment }}.${{ matrix.target }}
       working-directory: terraform
