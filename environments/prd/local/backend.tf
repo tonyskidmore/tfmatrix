@@ -1,5 +1,5 @@
 terraform {
   backend "local" {
-    path = "prd/terraform.tfstate"
+    path = "prd.local.tfstate"
   }
 }
