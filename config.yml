@@ -1,5 +1,8 @@
 ---
 
+# only run against changed targets or environments?
+changed_only: true
+
 target:
   - local
   # - aws

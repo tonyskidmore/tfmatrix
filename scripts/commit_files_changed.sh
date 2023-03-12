@@ -1,4 +1,5 @@
 #!/bin/bash
-set -ex
+set -euo pipefail
 
-git diff-tree --no-commit-id --name-only "$GITHUB_SHA" -r
+changed_files=$(git diff-tree --no-commit-id --name-only "$GITHUB_SHA" -r)
+echo "changed_files=${changed_files}" >> "$GITHUB_OUTPUT"

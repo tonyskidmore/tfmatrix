@@ -15,9 +15,10 @@ jobs:
 
   changed_files:
     name: Changed
+    # if: needs.load_config.outputs.changed_only == 'true'
     runs-on: ubuntu-latest
     outputs:
-      output1: ${{ steps.changed.outputs.environ }}
+      changed_files: ${{ steps.changed.outputs.changed_files }}
     defaults:
       run:
         shell: bash
@@ -33,31 +34,31 @@ jobs:
       id: changed_files
       run: scripts/commit_files_changed.sh
 
-    - name: Get changed files
-      id: changed-files
-      uses: tj-actions/changed-files@v35
+    # - name: Get changed files
+    #   id: changed-files
+    #   uses: tj-actions/changed-files@v35
 
-    - name: List all changed files
-      id: changed
-      run: |
-        declare -a dirs
-        for file in ${{ steps.changed-files.outputs.all_changed_files }}
-        do
-          echo "$file was changed"
-          dir=$(dirname $file)
-          dir_name="${dir#terraform/environments/}"
-          echo "directory name: $dir_name"
-          if [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]]
-          then
-            printf "adding %s to matrix array\n" "$dir_name"
-            dirs+=("$dir_name")
-          else
-            printf "not adding %s to matrix array\n" "$dir_name"
-          fi
-        done
-        declare -p dirs
-        json=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${dirs[@]}")
-        echo "environ=$json" >> "$GITHUB_OUTPUT"
+    # - name: List all changed files
+    #   id: changed
+    #   run: |
+    #     declare -a dirs
+    #     for file in ${{ steps.changed-files.outputs.all_changed_files }}
+    #     do
+    #       echo "$file was changed"
+    #       dir=$(dirname $file)
+    #       dir_name="${dir#terraform/environments/}"
+    #       echo "directory name: $dir_name"
+    #       if [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]]
+    #       then
+    #         printf "adding %s to matrix array\n" "$dir_name"
+    #         dirs+=("$dir_name")
+    #       else
+    #         printf "not adding %s to matrix array\n" "$dir_name"
+    #       fi
+    #     done
+    #     declare -p dirs
+    #     json=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${dirs[@]}")
+    #     echo "environ=$json" >> "$GITHUB_OUTPUT"
 
   load_config:
     name: Config
@@ -66,6 +67,7 @@ jobs:
       - changed_files
     outputs:
       config: ${{ steps.load_config.outputs.config}}
+      # changed_only: ${{ steps.load_config.outputs.changed_only }}
     defaults:
       run:
         shell: bash
@@ -78,6 +80,9 @@ jobs:
     - name: Load config
       id: load_config
       run: scripts/get_config.sh
+      env:
+        CHANGED_FILES: ${{ needs.changed_files.outputs.changed_files }}
+
 
   terraform:
     name: 'Terraform'
