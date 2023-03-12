@@ -1,1 +1,1 @@
-path = tst.local.tfstate
+path = "tst.local.tfstate"

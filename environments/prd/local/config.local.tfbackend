@@ -1,1 +1,1 @@
-path = prd.local.tfstate
+path = "prd.local.tfstate"
