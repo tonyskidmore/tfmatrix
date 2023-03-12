@@ -112,20 +112,17 @@ jobs:
 
     - name: Terraform Init
       run: |
-        ls -alt "$GITHUB_WORKSPACE"
-        ls -alt "$GITHUB_WORKSPACE/environments"
-        ls -alt "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}"
-        ls -alt "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}"
-        cat "$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/config.${{ matrix.target }}.tfbackend"
-
-        terraform -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
-          init \
-          -backend-config="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/config.${{ matrix.target }}.tfbackend"
-      # run: terraform init -backend-config="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/backend.tf"
+           terraform init \
+            -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+            -backend-config="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/config.${{ matrix.target }}.tfbackend"
       working-directory: terraform
 
     - name: Terraform Format
-      run: terraform fmt -check -recursive
+      run: |
+           terraform fmt \
+             -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+             -check \
+             -recursive
       working-directory: terraform
 
     - name: Login to Azure
@@ -137,9 +134,18 @@ jobs:
     - name: Terraform Plan
       run: |
         terraform plan \
-          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }} \
-          -out tfplan.${{ matrix.environment }}.${{ matrix.target }} \
+          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+          -out "tfplan.${{ matrix.environment }}.${{ matrix.target }}" \
           -var-file="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/terraform.tfvars"
+      working-directory: terraform
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      # if: github.ref == 'refs/heads/main'
+      run: |
+        terraform apply \
+          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+          "tfplan.${{ matrix.environment }}.${{ matrix.target }}"
       working-directory: terraform
 
     - name: Review
@@ -149,13 +155,4 @@ jobs:
         printf "PWD: %s\n" "$PWD"
         ls -alt
         tree "$GITHUB_WORKSPACE"
-      working-directory: terraform
-
-    - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      # if: github.ref == 'refs/heads/main'
-      run: |
-        terraform apply \
-          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }} \
-          tfplan.${{ matrix.environment }}.${{ matrix.target }}
       working-directory: terraform
