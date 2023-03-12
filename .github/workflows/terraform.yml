@@ -94,6 +94,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Environment
+      run: |
+        env
+        ls -alt "$GITHUB_WORKSPACE"
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
