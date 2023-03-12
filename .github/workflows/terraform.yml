@@ -76,7 +76,7 @@ jobs:
 
   terraform:
     name: 'Terraform'
-    if: needs.changed_files.outputs.output1 != '[]'
+    # if: needs.changed_files.outputs.output1 != '[]'
     runs-on: ubuntu-latest
     environment: ${{ matrix.environ }}
     needs:
