@@ -9,13 +9,6 @@ targets=($(yq -r '.target[]' <<< "$config"))
 environments=($(yq -r '.environment[]' <<< "$config"))
 matrix_config=$(yq 'del(."changed_only")' -oj <<< "$config")
 
-
-# changed_only=$(yq '.changed_only' config.yml)
-
-# matrix_config=$(yq 'del(."changed_only")' -oj "$GITHUB_WORKSPACE/config.yml")
-# config_compact_json=$(jq -c <<< "$matrix_config")
-# targets=$(yq -r '.targets[]' config.yml)
-
 declare -p targets
 declare -p environments
 declare -p CHANGED_FILES
@@ -24,16 +17,6 @@ printf "matrix config: %s\n" "$matrix_config"
 printf "changed_only: %s\n" "${changed_only,,}"
 printf "CHANGED_FILES: \n%s\n" "$CHANGED_FILES"
 
-#TODO: handle changed files processing
-# if there were no updates in the names environment e.g.
-# environments/dev
-# environments/prd
-# environments/tst
-# or no updated in the nameds targets e.g
-# terraform/aws
-# terraform/azure
-# terraform/local
-# then remove from the matrix
 
 if [[ "${changed_only,,}" == "true" ]]
 then
@@ -48,10 +31,6 @@ then
       matrix_config=$(jq -r '.environment = $ARGS.positional' --args "${environments[@]}" <<< "$matrix_config")
       all_envs=1
       break
-    # else
-    #   # remove from matrix if target code has not been updated
-    #   echo "Removing $target from matrix"
-    #   matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
     fi
   done
   # if all environments have not already been declared as required then remove them selectively
@@ -76,8 +55,6 @@ env_count=$(jq -r '.environment | length' <<< "$matrix_config")
 [[ "$env_count" == "0" ]] && matrix_config='{}'
 tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
 [[ "$tgt_count" == "0" ]] && matrix_config='{}'
-# [[ "$env_count" == "0" ]] && matrix_config=$(jq -r 'del(.environment)' <<< "$matrix_config")
-# [[ "$tgt_count" == "0" ]] && matrix_config=$(jq -r 'del(.target)' <<< "$matrix_config")
 
 jq <<< "$matrix_config"
 
