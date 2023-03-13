@@ -38,15 +38,6 @@ printf "CHANGED_FILES: \n%s\n" "$CHANGED_FILES"
 
 if [[ "${changed_only,,}" == "true" ]]
 then
-  for environment in "${environments[@]}"
-  do
-    printf "environment: %s\n" "$environment"
-    if ! grep -q "environments/$environment" <<< "$CHANGED_FILES"
-    then
-      echo "Removing $environment from matrix"
-      matrix_config=$(jq -r --arg ENVIRON "$environment" 'del(.environment[] | select(.==$ENVIRON))' <<< "$matrix_config")
-    fi
-  done
   for target in "${targets[@]}"
   do
     printf "target: %s\n" "$target"
@@ -56,12 +47,22 @@ then
       matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
     fi
   done
+  for environment in "${environments[@]}"
+  do
+    printf "environment: %s\n" "$environment"
+    if grep -q "environments/$environment" <<< "$CHANGED_FILES"
+    then
+      echo "Adding all enabled targets to $environment from matrix"
+      # matrix_config=$(jq -r --arg ENVIRON "$environment" 'del(.environment[] | select(.==$ENVIRON))' <<< "$matrix_config")
+      matrix_config=$(jq  '.target = $ARGS.positional' --args "${targets[@]}" <<< "$matrix_config")
+    fi
+  done
 fi
 
-env_count=$(jq -r '.environment | length' <<< "$matrix_config")
-tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
-[[ "$env_count" == "0" ]] && matrix_config=$(jq -r 'del(.environment)' <<< "$matrix_config")
-[[ "$tgt_count" == "0" ]] && matrix_config=$(jq -r 'del(.target)' <<< "$matrix_config")
+# env_count=$(jq -r '.environment | length' <<< "$matrix_config")
+# tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
+# [[ "$env_count" == "0" ]] && matrix_config=$(jq -r 'del(.environment)' <<< "$matrix_config")
+# [[ "$tgt_count" == "0" ]] && matrix_config=$(jq -r 'del(.target)' <<< "$matrix_config")
 
 jq <<< "$matrix_config"
 
