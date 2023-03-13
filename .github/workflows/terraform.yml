@@ -18,7 +18,7 @@ jobs:
     # if: needs.load_config.outputs.changed_only == 'true'
     runs-on: ubuntu-latest
     outputs:
-      changed_files: ${{ steps.changed_files.outputs.changed_files }}
+      changed_files: ${{ steps.commit_files.outputs.changed_files }}
     defaults:
       run:
         shell: bash
@@ -31,7 +31,7 @@ jobs:
         fetch-depth: 0
 
     - name: Change files script
-      id: changed_files
+      id: commit_files
       run: scripts/commit_files_changed.sh
 
     # - name: Get changed files
