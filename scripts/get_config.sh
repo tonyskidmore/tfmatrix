@@ -43,22 +43,27 @@ then
     printf "target: %s\n" "$target"
     if grep -q "terraform/$target" <<< "$CHANGED_FILES"
     then
+      # if base terraform has been updated for any target (e.g. local, azure or aws)
+      # then all environments are in scope (e.g. dev, tst, prd)
       echo "Adding all enabled environments from matrix"
       matrix_config=$(jq -r '.environment = $ARGS.positional' --args "${environments[@]}" <<< "$matrix_config")
       all_envs=1
     else
-      matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==TARGET))' <<< "$matrix_config")
+      # remove from matrix if target code has not been updated
+      matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
     fi
   done
+  # if all environments have not already been declared as required then remove them selectively
   if [[ -z "$all_envs" ]]
   then
     for environment in "${environments[@]}"
     do
         printf "environment: %s\n" "$environment"
+
         if ! grep -q "environments/$environment" <<< "$CHANGED_FILES"
         then
           echo "Removing $environment from matrix"
-          matrix_config=$(jq -r --arg ENVIRON  "$environment" 'del(.environment[] | select(.==$ENVIRON ))' <<< "$matrix_config")
+          matrix_config=$(jq -r --arg ENVIRON "$environment" 'del(.environment[] | select(.==$ENVIRON ))' <<< "$matrix_config")
         fi
     done
   fi
