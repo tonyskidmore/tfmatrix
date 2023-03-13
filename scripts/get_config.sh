@@ -21,7 +21,6 @@ declare -p environments
 declare -p CHANGED_FILES
 
 printf "matrix config: %s\n" "$matrix_config"
-printf "compact json: %s\n" "$config_compact_json"
 printf "changed_only: %s\n" "${changed_only,,}"
 printf "CHANGED_FILES: \n%s\n" "$CHANGED_FILES"
 
@@ -50,6 +49,7 @@ then
       all_envs=1
     else
       # remove from matrix if target code has not been updated
+      echo "Removing $target from matrix"
       matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
     fi
   done
@@ -69,6 +69,8 @@ then
   fi
 fi
 
+# there must be at least one target and one environment
+# if not set the output as '{}', whihc will cause the terraform job to be skipped
 env_count=$(jq -r '.environment | length' <<< "$matrix_config")
 [[ "$env_count" == "0" ]] && matrix_config='{}'
 tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
@@ -79,4 +81,5 @@ tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
 jq <<< "$matrix_config"
 
 config_compact_json=$(jq -c <<< "$matrix_config")
+printf "compact json: %s\n" "$config_compact_json"
 echo "config=$config_compact_json" >> "$GITHUB_OUTPUT"
