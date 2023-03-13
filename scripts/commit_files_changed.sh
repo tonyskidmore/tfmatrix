@@ -12,11 +12,8 @@ echo "changed_files<<$EOF" >> $GITHUB_OUTPUT
 echo "$commit_updated_files" >> $GITHUB_OUTPUT
 echo "$EOF" >> $GITHUB_OUTPUT
 
-echo "JSON_RESPONSE<<$EOF" >> $GITHUB_ENV
-curl https://example.com >> $GITHUB_ENV
-echo "$EOF" >> $GITHUB_ENV
 
-echo "$commit_updated_files"
+echo "commit_updated_files: $commit_updated_files"
 
 # if [[ -n "$commit_updated_files" ]]
 # then
