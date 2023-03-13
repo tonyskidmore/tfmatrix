@@ -47,10 +47,21 @@ then
       matrix_config=$(jq -r --arg ENVIRON "$environment" 'del(.environment[] | select(.==$ENVIRON))' <<< "$matrix_config")
     fi
   done
+  for target in "${targets[@]}"
+  do
+    printf "target: %s\n" "$target"
+    if ! grep -q "terraform/$target" <<< "$CHANGED_FILES"
+    then
+      echo "Removing $target from matrix"
+      matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
+    fi
+  done
 fi
 
 env_count=$(jq -r '.environment | length' <<< "$matrix_config")
 [[ "$env_count" == "0" ]] && matrix_config=$(jq -r 'del(.environment)' <<< "$matrix_config")
+tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
+[[ "$tgt_count" == "0" ]] && matrix_config=$(jq -r 'del(.target)' <<< "$matrix_config")
 
 jq <<< "$matrix_config"
 
