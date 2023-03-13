@@ -52,7 +52,7 @@ then
     #   # remove from matrix if target code has not been updated
     #   echo "Removing $target from matrix"
     #   matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
-    # fi
+    fi
   done
   # if all environments have not already been declared as required then remove them selectively
   if [[ -z "$all_envs" ]]
