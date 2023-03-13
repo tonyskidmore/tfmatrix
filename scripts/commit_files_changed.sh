@@ -12,7 +12,7 @@ echo "changed_files<<$EOF" >> $GITHUB_OUTPUT
 echo "$commit_updated_files" >> $GITHUB_OUTPUT
 echo "$EOF" >> $GITHUB_OUTPUT
 
-echo "commit_updated_files: $commit_updated_files"
+printf "commit_updated_files: \n%s\n" "$commit_updated_files"
 
 # code that generates: "github actions Unable to process file command 'output' successfully"
 # echo "changed_files=$commit_updated_files" >> "$GITHUB_OUTPUT"
