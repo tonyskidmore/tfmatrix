@@ -7,9 +7,8 @@ config=$(< "$GITHUB_WORKSPACE/config.yml")
 changed_only=$(yq '.changed_only' <<< "$config")
 targets=($(yq -r '.target[]' <<< "$config"))
 environments=($(yq -r '.environment[]' <<< "$config"))
-
 matrix_config=$(yq 'del(."changed_only")' -oj <<< "$config")
-config_compact_json=$(jq -c <<< "$matrix_config")
+
 
 # changed_only=$(yq '.changed_only' config.yml)
 
@@ -42,9 +41,15 @@ then
   for environment in "${environments[@]}"
   do
     printf "environment: %s\n" "$environment"
-    # if 
-    # jq -r 'del(.target[] | select(. == "aws"))' <<< "$matrix_config"
+    if ! grep -q "environments/$environment" <<< "$CHANGED_FILES"
+    then
+      echo "Removing $environment from matrix"
+      matrix_config=$(jq -r --arg ENVIRON "$environment" 'del(.environment[] | select(.==$ENVIRON))' <<< "$matrix_config")
+    fi
   done
 fi
 
+jq <<< "$matrix_config"
+
+config_compact_json=$(jq -c <<< "$matrix_config")
 echo "config=$config_compact_json" >> "$GITHUB_OUTPUT"
