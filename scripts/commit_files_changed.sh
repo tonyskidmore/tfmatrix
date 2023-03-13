@@ -12,12 +12,7 @@ echo "changed_files<<$EOF" >> $GITHUB_OUTPUT
 echo "$commit_updated_files" >> $GITHUB_OUTPUT
 echo "$EOF" >> $GITHUB_OUTPUT
 
-
 echo "commit_updated_files: $commit_updated_files"
 
-# if [[ -n "$commit_updated_files" ]]
-# then
-#   echo "changed_files=$commit_updated_files" >> "$GITHUB_OUTPUT"
-# else
-#   echo "changed_files='none'" >> "$GITHUB_OUTPUT"
-# fi
+# code that generates: "github actions Unable to process file command 'output' successfully"
+# echo "changed_files=$commit_updated_files" >> "$GITHUB_OUTPUT"
