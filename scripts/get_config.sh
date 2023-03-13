@@ -60,9 +60,8 @@ fi
 
 env_count=$(jq -r '.environment | length' <<< "$matrix_config")
 tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
-[[ "$env_count" == "0" || "$tgt_count" == "0" ]] && matrix_config='{}'
-# [[ "$env_count" == "0" ]] && matrix_config=$(jq -r 'del(.environment)' <<< "$matrix_config")
-# [[ "$tgt_count" == "0" ]] && matrix_config=$(jq -r 'del(.target)' <<< "$matrix_config")
+[[ "$env_count" == "0" ]] && matrix_config=$(jq -r 'del(.environment)' <<< "$matrix_config")
+[[ "$tgt_count" == "0" ]] && matrix_config=$(jq -r 'del(.target)' <<< "$matrix_config")
 
 jq <<< "$matrix_config"
 
