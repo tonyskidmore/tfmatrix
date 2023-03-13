@@ -49,6 +49,9 @@ then
   done
 fi
 
+env_count=$(jq -r '.environment | length' <<< "$matrix_config")
+[[ "$env_count" == "0" ]] && jq -r 'del(.environment)' <<< "$matrix_config"
+
 jq <<< "$matrix_config"
 
 config_compact_json=$(jq -c <<< "$matrix_config")
