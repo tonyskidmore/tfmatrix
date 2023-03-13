@@ -19,6 +19,7 @@ config_compact_json=$(jq -c <<< "$matrix_config")
 
 declare -p targets
 declare -p environments
+declare -p CHANGED_FILES
 
 printf "matrix config: %s\n" "$matrix_config"
 printf "compact json: %s\n" "$config_compact_json"
@@ -26,5 +27,24 @@ printf "changed_only: %s\n" "${changed_only,,}"
 printf "CHANGED_FILES: \n%s\n" "$CHANGED_FILES"
 
 #TODO: handle changed files processing
+# if there were no updates in the names environment e.g.
+# environments/dev
+# environments/prd
+# environments/tst
+# or no updated in the nameds targets e.g
+# terraform/aws
+# terraform/azure
+# terraform/local
+# then remove from the matrix
+
+if [[ "${changed_only,,}" == "true" ]]
+then
+  for environment in "${environments[@]}"
+  do
+    printf "environment: %s\n" "$environment"
+    # if 
+    # jq -r 'del(.target[] | select(. == "aws"))' <<< "$matrix_config"
+  done
+fi
 
 echo "config=$config_compact_json" >> "$GITHUB_OUTPUT"
