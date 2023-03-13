@@ -47,11 +47,12 @@ then
       echo "Adding all enabled environments from matrix"
       matrix_config=$(jq -r '.environment = $ARGS.positional' --args "${environments[@]}" <<< "$matrix_config")
       all_envs=1
-    else
-      # remove from matrix if target code has not been updated
-      echo "Removing $target from matrix"
-      matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
-    fi
+      break
+    # else
+    #   # remove from matrix if target code has not been updated
+    #   echo "Removing $target from matrix"
+    #   matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
+    # fi
   done
   # if all environments have not already been declared as required then remove them selectively
   if [[ -z "$all_envs" ]]
