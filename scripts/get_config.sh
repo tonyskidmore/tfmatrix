@@ -41,26 +41,33 @@ then
   for target in "${targets[@]}"
   do
     printf "target: %s\n" "$target"
-    if ! grep -q "terraform/$target" <<< "$CHANGED_FILES"
+    if grep -q "terraform/$target" <<< "$CHANGED_FILES"
     then
-      echo "Removing $target from matrix"
-      matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==$TARGET))' <<< "$matrix_config")
+      echo "Adding all enabled environments from matrix"
+      matrix_config=$(jq -r '.environment = $ARGS.positional' --args "${environments[@]}" <<< "$matrix_config")
+      all_envs=1
+    else
+      matrix_config=$(jq -r --arg TARGET "$target" 'del(.target[] | select(.==TARGET))' <<< "$matrix_config")
     fi
   done
-  for environment in "${environments[@]}"
-  do
-    printf "environment: %s\n" "$environment"
-    if grep -q "environments/$environment" <<< "$CHANGED_FILES"
-    then
-      echo "Adding all enabled targets to $environment from matrix"
-      # matrix_config=$(jq -r --arg ENVIRON "$environment" 'del(.environment[] | select(.==$ENVIRON))' <<< "$matrix_config")
-      matrix_config=$(jq  '.target = $ARGS.positional' --args "${targets[@]}" <<< "$matrix_config")
-    fi
-  done
+  if [[ -z "$all_envs" ]]
+  then
+    for environment in "${environments[@]}"
+    do
+        printf "environment: %s\n" "$environment"
+        if ! grep -q "environments/$environment" <<< "$CHANGED_FILES"
+        then
+          echo "Removing $environment from matrix"
+          matrix_config=$(jq -r --arg ENVIRON  "$environment" 'del(.environment[] | select(.==$ENVIRON ))' <<< "$matrix_config")
+        fi
+    done
+  fi
 fi
 
-# env_count=$(jq -r '.environment | length' <<< "$matrix_config")
-# tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
+env_count=$(jq -r '.environment | length' <<< "$matrix_config")
+[[ "$env_count" == "0" ]] && matrix_config='{}'
+tgt_count=$(jq -r '.target | length' <<< "$matrix_config")
+[[ "$tgt_count" == "0" ]] && matrix_config='{}'
 # [[ "$env_count" == "0" ]] && matrix_config=$(jq -r 'del(.environment)' <<< "$matrix_config")
 # [[ "$tgt_count" == "0" ]] && matrix_config=$(jq -r 'del(.target)' <<< "$matrix_config")
 
