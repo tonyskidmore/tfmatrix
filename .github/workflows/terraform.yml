@@ -15,9 +15,10 @@ jobs:
 
   changed_files:
     name: Changed
+    # if: needs.load_config.outputs.changed_only == 'true'
     runs-on: ubuntu-latest
     outputs:
-      output1: ${{ steps.changed.outputs.environ }}
+      changed_files: ${{ steps.commit_files.outputs.changed_files }}
     defaults:
       run:
         shell: bash
@@ -29,41 +30,70 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Get changed files
-      id: changed-files
-      uses: tj-actions/changed-files@v35
+    - name: Change files script
+      id: commit_files
+      run: scripts/commit_files_changed.sh
 
-    - name: List all changed files
-      id: changed
-      run: |
-        declare -a dirs
-        for file in ${{ steps.changed-files.outputs.all_changed_files }}
-        do
-          echo "$file was changed"
-          dir=$(dirname $file)
-          dir_name="${dir#terraform/environments/}"
-          echo "directory name: $dir_name"
-          if [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]]
-          then
-            printf "adding %s to matrix array\n" "$dir_name"
-            dirs+=("$dir_name")
-          else
-            printf "not adding %s to matrix array\n" "$dir_name"
-          fi
-        done
-        declare -p dirs
-        json=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${dirs[@]}")
-        echo "environ=$json" >> "$GITHUB_OUTPUT"
+    # - name: Get changed files
+    #   id: changed-files
+    #   uses: tj-actions/changed-files@v35
+
+    # - name: List all changed files
+    #   id: changed
+    #   run: |
+    #     declare -a dirs
+    #     for file in ${{ steps.changed-files.outputs.all_changed_files }}
+    #     do
+    #       echo "$file was changed"
+    #       dir=$(dirname $file)
+    #       dir_name="${dir#terraform/environments/}"
+    #       echo "directory name: $dir_name"
+    #       if [[ "${dir_name,,}" =~ (^dev$)|(^tst$)|(^prd$) ]]
+    #       then
+    #         printf "adding %s to matrix array\n" "$dir_name"
+    #         dirs+=("$dir_name")
+    #       else
+    #         printf "not adding %s to matrix array\n" "$dir_name"
+    #       fi
+    #     done
+    #     declare -p dirs
+    #     json=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${dirs[@]}")
+    #     echo "environ=$json" >> "$GITHUB_OUTPUT"
+
+  load_config:
+    name: Config
+    runs-on: ubuntu-latest
+    needs:
+      - changed_files
+    outputs:
+      config: ${{ steps.load_config.outputs.config}}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Load config
+      id: load_config
+      run: scripts/get_config.sh
+      env:
+        CHANGED_FILES: ${{ needs.changed_files.outputs.changed_files }}
+
 
   terraform:
     name: 'Terraform'
-    if: needs.changed_files.outputs.output1 != '[]'
+    # if: needs.changed_files.outputs.output1 != '[]'
     runs-on: ubuntu-latest
-    environment: ${{ matrix.environ }}
-    needs: changed_files
+    environment: ${{ matrix.environment }}
+    needs:
+      - load_config
+      - changed_files
     strategy:
-      matrix:
-        environ: ${{fromJson(needs.changed_files.outputs.output1)}}
+      matrix: ${{fromJson(needs.load_config.outputs.config)}}
+        # environ: ${{fromJson(needs.changed_files.outputs.output1)}}
 
     defaults:
       run:
@@ -73,6 +103,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
+    - name: Environment
+      run: |
+        env
+        ls -alt "$GITHUB_WORKSPACE"
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
@@ -80,25 +115,48 @@ jobs:
       run: terraform --version
 
     - name: Terraform Init
-      run: terraform init
-      # run: terraform init -backend-config="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/backend.tf"
-      working-directory: terraform
+      run: |
+           terraform \
+           -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+           init \
+           -backend-config="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/${{ matrix.target }}/config.${{ matrix.target }}.tfbackend"
 
     - name: Terraform Format
-      run: terraform fmt -check
-      working-directory: terraform
+      run: |
+           terraform \
+             -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+             fmt \
+             -check \
+             -recursive
 
-    # - name: Login to Azure
-    #   uses: azure/login@v1
-    #   with:
-    #     creds: ${{secrets.AZURE_CREDENTIALS}}
+    - name: Login to Azure
+      if: matrix.target == 'azure'
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS}}
 
     - name: Terraform Plan
-      run: terraform plan -out tfplan -var-file="$GITHUB_WORKSPACE/terraform/environments/${{ matrix.environ }}/terraform.tfvars"
-      working-directory: terraform
+      run: |
+        terraform \
+          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+          plan \
+          -out "tfplan.${{ matrix.environment }}.${{ matrix.target }}" \
+          -var-file="$GITHUB_WORKSPACE/environments/${{ matrix.environment }}/terraform.tfvars"
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       # if: github.ref == 'refs/heads/main'
-      run: terraform apply tfplan
+      run: |
+        terraform \
+          -chdir="$GITHUB_WORKSPACE/terraform/${{ matrix.target }}" \
+          apply \
+          "tfplan.${{ matrix.environment }}.${{ matrix.target }}"
+
+    - name: Review
+      if: always()
+      run: |
+        env
+        printf "PWD: %s\n" "$PWD"
+        ls -alt
+        tree "$GITHUB_WORKSPACE"
       working-directory: terraform
